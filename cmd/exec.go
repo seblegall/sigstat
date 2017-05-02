@@ -15,9 +15,11 @@
 package cmd
 
 import (
+	"fmt"
+	"github.com/seblegall/sigstat/pkg/sigstat"
 	"github.com/spf13/cobra"
-	"os/exec"
 	"log"
+	"os"
 )
 
 // execCmd represents the exec command
@@ -32,10 +34,20 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		c := exec.Command(args[0], args[1:]...)
-		if err := c.Start(); err != nil {
-			log.Fatal("\n" + err.Error() + "\n")
+		wd, err := os.Getwd()
+		if err != nil {
+			log.Fatal("Error when getting the working dir : ", err)
 		}
+
+		c := sigstat.Command{
+			Command: args,
+			Path:    wd,
+		}
+
+		c.Exec()
+
+		fmt.Print(c.StdOut.String())
+		fmt.Print(c.ExitCode)
 	},
 }
 
