@@ -5,14 +5,19 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 	"time"
 )
 
+//Command represents a shell command.
+//It could be a binary as well as a script
+//or any kind of command it is possible to run in a shell.
 type Command struct {
 	Command   []string
 	Path      string
 	Timeout   time.Duration
+	Status    string
 	StdOut    bytes.Buffer
 	StdErr    bytes.Buffer
 	StartedAt time.Time
@@ -21,15 +26,30 @@ type Command struct {
 	ExitCode  int
 }
 
-func (c *Command) Exec() {
+//Client is an interface that must be implemented by any kind of sigstat client.
+//Client could be an http client, a tcp client or event a io.writer that log informations.
+type Client interface {
+	CommandService() CommandService
+}
+
+//CommandService define the way command should me manipulated throw the client.
+type CommandService interface {
+	UpdateStatus(cmd *Command)
+}
+
+//Exec actualy exec the command and send status update using
+//the CommandService defined in a given service.
+func (c *Command) Exec(client Client) {
 
 	c.StartedAt = time.Now()
 
-	cmd := exec.Command(c.Command[0], c.Command[1:]...)
+	cmd := exec.Command("/bin/sh", "-c", strings.Join(c.Command, " "))
 	cmd.Dir = c.Path
 	cmd.Stdout = &c.StdOut
 	cmd.Stderr = &c.StdErr
 	cmd.Env = os.Environ()
+
+	//Start process. Exit code 127 if process fail to start.
 	if err := cmd.Start(); err != nil {
 		c.StdErr.WriteString("\n" + err.Error() + "\n")
 		c.ExitCode = 127
@@ -47,10 +67,28 @@ func (c *Command) Exec() {
 			}(timer, cmd)
 		}
 
+		// Create a ticker that will let us send status information at regular time duration.
+		ticker := time.NewTicker(time.Millisecond)
+		go func(ticker *time.Ticker, cmd *exec.Cmd, c *Command, client Client) {
+			for _ = range ticker.C {
+				err := cmd.Process.Signal(syscall.Signal(0))
+				if err == nil {
+					c.Status = "running"
+					client.CommandService().UpdateStatus(c)
+				}
+			}
+		}(ticker, cmd, c, client)
+
 		err := cmd.Wait()
+
+		ticker.Stop()
+
 		if c.Timeout > 0 {
 			timer.Stop()
 		}
+
+		c.Status = "stopped"
+
 		if err != nil {
 			// unsuccessful exit code?
 			c.ExitCode = -1

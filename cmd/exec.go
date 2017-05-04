@@ -16,52 +16,43 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/seblegall/sigstat/pkg/sigstat"
-	"github.com/spf13/cobra"
 	"log"
 	"os"
+
+	"github.com/seblegall/sigstat/pkg/http"
+	"github.com/seblegall/sigstat/pkg/sigstat"
+	"github.com/spf13/cobra"
 )
 
 // execCmd represents the exec command
 var execCmd = &cobra.Command{
 	Use:   "exec",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Execute the command passed as argument and send monitoring data to the sigstat server",
+	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		//get the current working dir
 		wd, err := os.Getwd()
 		if err != nil {
 			log.Fatal("Error when getting the working dir : ", err)
 		}
 
-		c := sigstat.Command{
+		command := sigstat.Command{
 			Command: args,
 			Path:    wd,
 		}
+		c := http.NewClient()
 
-		c.Exec()
+		//Execute the command
+		command.Exec(c)
 
-		fmt.Print(c.StdOut.String())
-		fmt.Print(c.ExitCode)
+		//Print the exit code and the process status at the end
+		fmt.Println(command.ExitCode)
+		c.CommandService().UpdateStatus(&command)
+
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(execCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// execCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// execCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }
