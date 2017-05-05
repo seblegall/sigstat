@@ -33,6 +33,7 @@ var execCmd = &cobra.Command{
 
 		//get the current working dir
 		wd, err := os.Getwd()
+
 		if err != nil {
 			log.Fatal("Error when getting the working dir : ", err)
 		}
@@ -49,6 +50,8 @@ var execCmd = &cobra.Command{
 		//Print the exit code and the process status at the end
 		fmt.Println(command.ExitCode)
 		c.CommandService().UpdateStatus(&command)
+
+		fmt.Println("Exit code : ", command.ExitCode)
 
 	},
 }

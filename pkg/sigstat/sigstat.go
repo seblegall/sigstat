@@ -2,7 +2,6 @@ package sigstat
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -54,21 +53,8 @@ func (c *Command) Exec(client Client) {
 		c.StdErr.WriteString("\n" + err.Error() + "\n")
 		c.ExitCode = 127
 	} else {
-		var timer *time.Timer
-		if c.Timeout > 0 {
-			timer = time.NewTimer(c.Timeout)
-			go func(timer *time.Timer, cmd *exec.Cmd) {
-				for _ = range timer.C {
-					c.Killed = true
-					if err := cmd.Process.Kill(); err != nil {
-						c.StdErr.WriteString(fmt.Sprintf("\nUnabled to kill the process: %s\n", err))
-					}
-				}
-			}(timer, cmd)
-		}
-
-		// Create a ticker that will let us send status information at regular time duration.
-		ticker := time.NewTicker(time.Millisecond)
+		// Create a ticker that outputs elapsed time
+		ticker := time.NewTicker(time.Millisecond * 100)
 		go func(ticker *time.Ticker, cmd *exec.Cmd, c *Command, client Client) {
 			for _ = range ticker.C {
 				err := cmd.Process.Signal(syscall.Signal(0))
@@ -82,10 +68,6 @@ func (c *Command) Exec(client Client) {
 		err := cmd.Wait()
 
 		ticker.Stop()
-
-		if c.Timeout > 0 {
-			timer.Stop()
-		}
 
 		c.Status = "stopped"
 
