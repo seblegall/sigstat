@@ -12,7 +12,7 @@ type CommandService struct {
 	client *Client
 }
 
-func (s *CommandService) UpdateStatus(cmd *sigstat.Command) {
+func (s *CommandService) UpdateStatus(cmd sigstat.Command) {
 	if cmd.Status == "running" {
 		fmt.Println("Process is runing: ", cmd.Status)
 	} else {

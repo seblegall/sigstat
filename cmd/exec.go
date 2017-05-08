@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/seblegall/sigstat/pkg/http"
+	"github.com/seblegall/sigstat/pkg/client/http"
 	"github.com/seblegall/sigstat/pkg/sigstat"
 	"github.com/spf13/cobra"
 )

@@ -34,7 +34,7 @@ type Client interface {
 
 //CommandService define the way command should me manipulated throw the client.
 type CommandService interface {
-	UpdateStatus(cmd *Command)
+	UpdateStatus(cmd Command)
 }
 
 //Exec actualy exec the command and send status update using
@@ -74,7 +74,7 @@ func (c *Command) Exec(client Client) {
 				err := cmd.Process.Signal(syscall.Signal(0))
 				if err == nil {
 					c.Status = "running"
-					client.CommandService().UpdateStatus(c)
+					client.CommandService().UpdateStatus(*c)
 				}
 			}
 		}(ticker, cmd, c, client)
