@@ -36,7 +36,7 @@ func NewHandler(c sigstat.Client) *Handler {
 	var routes = routes{
 		route{
 			"UpdateStatus",
-			"GET",
+			"PATCH",
 			"/status/",
 			h.UpdateStatus,
 		},
