@@ -22,7 +22,7 @@ var serveCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		//Create new postgres client. (that does nothing yet)
-		c := postgres.NewClient()
+		c := postgres.NewClient("root", "password", "sigstat")
 
 		h := http.NewHandler(c)
 		s := http.NewServer(h)

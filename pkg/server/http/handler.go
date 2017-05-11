@@ -1,6 +1,8 @@
 package http
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -40,6 +42,12 @@ func NewHandler(c sigstat.Client) *Handler {
 			"/status/",
 			h.UpdateStatus,
 		},
+		route{
+			"CreateCommand",
+			"POST",
+			"/cmd/",
+			h.CreateCommand,
+		},
 	}
 
 	h.router = newRouter(routes)
@@ -64,6 +72,16 @@ func newRouter(rtes routes) *mux.Router {
 
 //Router returns the defined router for the Handler
 func (h *Handler) Router() *mux.Router { return h.router }
+
+func (h *Handler) CreateCommand(w http.ResponseWriter, r *http.Request) {
+	// Decode request.
+	var cmd sigstat.Command
+	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
+		log.Fatal(err)
+	}
+
+	h.client.CommandService().CreateCommand(cmd)
+}
 
 //UpdateStatus handler PUT request that update the status for a given Command ID.
 func (h *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {

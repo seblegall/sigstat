@@ -1,7 +1,9 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/seblegall/sigstat/pkg/sigstat"
 )
@@ -10,23 +12,42 @@ import (
 // All this code is made to be temp.
 
 type Client struct {
+	usr            string
+	psw            string
+	dbName         string
+	db             *sql.DB
 	commandService CommandService
 }
 
-func NewClient() *Client {
-	c := &Client{}
+func NewClient(usr, psw, dbName string) *Client {
+	c := &Client{
+		usr:    usr,
+		psw:    psw,
+		dbName: dbName,
+	}
+
+	c.commandService.client = c
+
 	return c
 }
 
-var _ sigstat.CommandService = &CommandService{}
+func (c *Client) Open() {
+	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
+		c.usr, c.psw, c.dbName)
 
-type CommandService struct{}
+	db, err := sql.Open("postgres", dbinfo)
 
-func (s *CommandService) UpdateStatus(cmd sigstat.Command) {
-	if cmd.Status == "running" {
-		fmt.Println("Process is runing: ", cmd.Status)
-	} else {
-		fmt.Println("Process is dead: ", cmd.Status)
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.db = db
+}
+
+func (c *Client) Close() {
+	err := c.db.Close()
+
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 

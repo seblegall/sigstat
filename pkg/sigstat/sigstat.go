@@ -14,6 +14,7 @@ import (
 //It could be a binary as well as a script
 //or any kind of command it is possible to run in a shell.
 type Command struct {
+	Group     string
 	Command   []string
 	Path      string
 	Timeout   time.Duration
@@ -34,6 +35,7 @@ type Client interface {
 
 //CommandService define the way command should me manipulated throw the client.
 type CommandService interface {
+	CreateCommand(cmd Command)
 	UpdateStatus(cmd Command)
 }
 

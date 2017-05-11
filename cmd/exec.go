@@ -38,6 +38,8 @@ var execCmd = &cobra.Command{
 		}
 		c := http.NewClient()
 
+		c.CommandService().CreateCommand(command)
+
 		//Execute the command
 		command.Exec(c)
 
