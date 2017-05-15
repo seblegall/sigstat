@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/seblegall/sigstat/pkg/client/http"
 	"github.com/seblegall/sigstat/pkg/sigstat"
@@ -33,12 +34,21 @@ var execCmd = &cobra.Command{
 		}
 
 		command := sigstat.Command{
-			Command: args,
+			Command: strings.Join(args, " "),
 			Path:    wd,
+			Group:   "test",
 		}
 		c := http.NewClient()
 
-		c.CommandService().CreateCommand(command)
+		id, err := c.CommandService().CreateCommand(command)
+		if err != nil {
+			log.Println("test")
+			log.Fatal(err)
+			log.Println("test2")
+		}
+
+		fmt.Println("The return id is : ", id)
+		command.ID = id
 
 		//Execute the command
 		command.Exec(c)

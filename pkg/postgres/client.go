@@ -8,9 +8,7 @@ import (
 	"github.com/seblegall/sigstat/pkg/sigstat"
 )
 
-// CAUTION
-// All this code is made to be temp.
-
+//Client is a sigstat.Client. Here, it create a postgres connection.
 type Client struct {
 	usr            string
 	psw            string
@@ -19,6 +17,7 @@ type Client struct {
 	commandService CommandService
 }
 
+//NewClient create a new postgres client.
 func NewClient(usr, psw, dbName string) *Client {
 	c := &Client{
 		usr:    usr,
@@ -31,6 +30,7 @@ func NewClient(usr, psw, dbName string) *Client {
 	return c
 }
 
+//Open opens a postgres connection.
 func (c *Client) Open() {
 	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
 		c.usr, c.psw, c.dbName)
@@ -43,6 +43,7 @@ func (c *Client) Open() {
 	c.db = db
 }
 
+//Close close a postgres connection
 func (c *Client) Close() {
 	err := c.db.Close()
 
@@ -51,4 +52,5 @@ func (c *Client) Close() {
 	}
 }
 
+//CommandService represents the CommandService interface implemented by the http client
 func (c *Client) CommandService() sigstat.CommandService { return &c.commandService }

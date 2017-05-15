@@ -3,8 +3,7 @@ package http
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"errors"
 	"log"
 	"net/http"
 	"net/url"
@@ -14,26 +13,28 @@ import (
 
 var _ sigstat.CommandService = &CommandService{}
 
+//CommandService represents the sigstat.CommandService interface
 type CommandService struct {
 	client *Client
-	url    *url.URL
 }
 
-func (s *CommandService) CreateCommand(cmd sigstat.Command) {
-	var u url.URL
-	u.Scheme = "http"
-	u.Host = "localhost:9000"
-	u.Path = "/cmd/"
+//createCommandResponse is the body of the http response
+type createCommandResponse struct {
+	GroupID int64  `json:"group-id,omitempty"`
+	Err     string `json:"error,omitsempty"`
+}
 
-	log.Println(u.String())
+//CreateCommand calls the sigstat server in order to create a new command
+func (s *CommandService) CreateCommand(cmd sigstat.Command) (int64, error) {
+	var u url.URL
+	u = s.client.Url
+	u.Path = "/cmd/"
 
 	d, err := json.Marshal(cmd)
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Println(err)
+		return 0, err
 	}
-
-	log.Println(d)
 
 	// Create request.
 	req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(d))
@@ -41,26 +42,28 @@ func (s *CommandService) CreateCommand(cmd sigstat.Command) {
 	// Execute request.
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return 0, err
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
+	var respBody createCommandResponse
+	//http error Handling
+	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
+		return 0, err
+	} else if respBody.Err != "" {
+		return 0, errors.New(respBody.Err)
+	}
+
+	return respBody.GroupID, nil
 }
 
+//UpdateStatus send current cmd status to the server
 func (s *CommandService) UpdateStatus(cmd sigstat.Command) {
-	var u url.URL
-	u.Scheme = "http"
-	u.Host = "localhost:9000"
-	u.Path = "/status/"
-
-	log.Println(u.String())
+	url := s.client.Url
+	url.Path = "/status/"
 
 	// Create request.
-	req, err := http.NewRequest("PATCH", u.String(), nil)
+	req, err := http.NewRequest("PATCH", url.String(), nil)
 
 	// Execute request.
 	resp, err := http.DefaultClient.Do(req)
