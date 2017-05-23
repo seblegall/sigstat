@@ -36,9 +36,15 @@ func NewHandler(c sigstat.Client) *Handler {
 	var routes = routes{
 		route{
 			"UpdateStatus",
-			"GET",
+			"PATCH",
 			"/status/",
 			h.UpdateStatus,
+		},
+		route{
+			"CreateCommand",
+			"POST",
+			"/cmd/",
+			h.CreateCommand,
 		},
 	}
 
@@ -64,13 +70,3 @@ func newRouter(rtes routes) *mux.Router {
 
 //Router returns the defined router for the Handler
 func (h *Handler) Router() *mux.Router { return h.router }
-
-//UpdateStatus handler PUT request that update the status for a given Command ID.
-func (h *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
-
-	cmd := sigstat.Command{
-		Status: "running",
-	}
-
-	h.client.CommandService().UpdateStatus(cmd)
-}

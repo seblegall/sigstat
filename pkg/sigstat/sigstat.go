@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -14,7 +13,10 @@ import (
 //It could be a binary as well as a script
 //or any kind of command it is possible to run in a shell.
 type Command struct {
-	Command   []string
+	Group     string
+	GroupID   int64
+	ID        int64
+	Command   string
 	Path      string
 	Timeout   time.Duration
 	Status    string
@@ -34,6 +36,7 @@ type Client interface {
 
 //CommandService define the way command should me manipulated throw the client.
 type CommandService interface {
+	CreateCommand(cmd Command) (int64, error)
 	UpdateStatus(cmd Command)
 }
 
@@ -43,7 +46,7 @@ func (c *Command) Exec(client Client) {
 
 	c.StartedAt = time.Now()
 
-	cmd := exec.Command("/bin/sh", "-c", strings.Join(c.Command, " "))
+	cmd := exec.Command("/bin/sh", "-c", c.Command)
 	cmd.Dir = c.Path
 	cmd.Stdout = &c.StdOut
 	cmd.Stderr = &c.StdErr
